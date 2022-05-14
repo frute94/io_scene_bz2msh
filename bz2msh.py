@@ -1,5 +1,5 @@
 """This module provides a parser and writer for BZ2 .msh files."""
-VERSION = 1.1
+VERSION = 1.11
 
 import json
 from ctypes import sizeof, Structure, Array
@@ -109,6 +109,7 @@ def read_optional_blocks(f):
 	
 	return material, texture, had_end_marker
 
+# This class provides a function that returns a recursive JSON represenation of its data.
 class StructureJSON(Structure):
 	def json(self):
 		json_handled_types = (int, str, float, list, tuple, bool)
@@ -963,6 +964,7 @@ class MSH:
 			# If you want improved performance in writing & parsing JSON data, do not sort keys or indent.
 			f.write(json.dumps(j, sort_keys=bool(indent), indent=indent))
 
+# Dump .msh data into humanly readable JSON file
 if __name__ == "__main__":
 	import sys, os
 	for msh_file in sys.argv[1::]:

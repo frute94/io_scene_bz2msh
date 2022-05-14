@@ -205,7 +205,8 @@ class Load:
 			
 			if mesh.renderflags.value & bz2msh.RS_DST_ONE:
 				# Not supported in BZCC I think?
-				append_flags += "g"
+				# append_flags += "g"
+				pass
 			
 			if RENDER_FLAGS_RENAME and append_flags:
 				bpy_obj.name = bpy_obj.name + "__" + append_flags
@@ -425,13 +426,13 @@ class Load:
 		
 		bpy_material = bpy.data.materials.new(name=material_name)
 		bpy_material.use_nodes = True
-		bpy_material.blend_method = "HASHED" # Needed for diffuse textures w/ alpha channel
+		bpy_material.blend_method = "HASHED" # Needed for diffuse textures w/ alpha channel due to backfacing z-order issues with other blend modes
 		bpy_node_bsdf = bpy_material.node_tree.nodes["Principled BSDF"]
 		
-		bpy_node_bsdf.inputs[0].default_value = tuple(msh_material.diffuse) if msh_material else (1.0, 1.0, 1.0, 1.0) # Diffuse Color
-		bpy_node_bsdf.inputs[17].default_value = tuple(msh_material.emissive) if msh_material else (0.0, 0.0, 0.0, 1.0) # Emissive Color
-		bpy_node_bsdf.inputs[18].default_value = NODE_EMISSIVE_STRENGTH
-		bpy_node_bsdf.inputs[7].default_value = NODE_DEFAULT_ROUGHNESS
+		bpy_node_bsdf.inputs["Base Color"].default_value = tuple(msh_material.diffuse) if msh_material else (1.0, 1.0, 1.0, 1.0) # Diffuse Color
+		bpy_node_bsdf.inputs["Emission"].default_value = tuple(msh_material.emissive) if msh_material else (0.0, 0.0, 0.0, 1.0)
+		bpy_node_bsdf.inputs["Emission Strength"].default_value = NODE_EMISSIVE_STRENGTH
+		bpy_node_bsdf.inputs["Roughness"].default_value = NODE_DEFAULT_ROUGHNESS
 		
 		if image_is_material_file:
 			# .material multiple textures

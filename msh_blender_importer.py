@@ -11,7 +11,7 @@ PRINT_TEXTURE_FINDER_INFO = False
 PRINT_LOCAL_MATERIAL_REUSE = False
 PRINT_MSH_HEADER = True
 
-NODE_NORMALMAP_STRENGTH = 0.10
+NODE_NORMALMAP_STRENGTH = 1.0
 NODE_EMISSIVE_STRENGTH = 1.0
 NODE_DEFAULT_ROUGHNESS = 0.50
 
@@ -430,7 +430,7 @@ class Load:
 		bpy_node_bsdf = bpy_material.node_tree.nodes["Principled BSDF"]
 		
 		bpy_node_bsdf.inputs["Base Color"].default_value = tuple(msh_material.diffuse) if msh_material else (1.0, 1.0, 1.0, 1.0) # Diffuse Color
-		bpy_node_bsdf.inputs["Emission"].default_value = tuple(msh_material.emissive) if msh_material else (0.0, 0.0, 0.0, 1.0)
+		bpy_node_bsdf.inputs["Emission Color"].default_value = tuple(msh_material.emissive) if msh_material else (0.0, 0.0, 0.0, 1.0)
 		bpy_node_bsdf.inputs["Emission Strength"].default_value = NODE_EMISSIVE_STRENGTH
 		bpy_node_bsdf.inputs["Roughness"].default_value = NODE_DEFAULT_ROUGHNESS
 		
@@ -510,12 +510,12 @@ class Load:
 						
 						bpy_material.node_tree.links.new(
 							bpy_node_texture.outputs["Color"],
-							bpy_node_bsdf.inputs["Specular"]
+							bpy_node_bsdf.inputs["Specular Tint"]
 						)
 					
 					elif which == "emissive":
 						bpy_material.node_tree.links.new(
-							bpy_node_bsdf.inputs["Emission"],
+							bpy_node_bsdf.inputs["Emission Color"],
 							bpy_node_texture.outputs["Color"]
 						)
 			

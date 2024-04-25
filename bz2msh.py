@@ -1,5 +1,5 @@
 """This module provides a parser and writer for BZ2 .msh files."""
-VERSION = 1.11
+VERSION = 1.12
 
 import json
 from ctypes import sizeof, Structure, Array

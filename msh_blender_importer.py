@@ -7,6 +7,9 @@ from math import radians
 from . import bz2msh
 import os
 
+# Normals changed in 4.1 from 4.0
+OLD_NORMALS = not (bpy.app.version[0] >= 4 and bpy.app.version[1] >= 1)
+
 PRINT_TEXTURE_FINDER_INFO = False
 PRINT_LOCAL_MATERIAL_REUSE = False
 PRINT_MSH_HEADER = True
@@ -228,11 +231,13 @@ class Load:
 			# Note: Setting invalid normals causes a crash when going into edit mode.
 			# If possible, at this point we should check for invalid normals that might cause blender to crash.
 			bpy_mesh.normals_split_custom_set(normals)
-			bpy_mesh.use_auto_smooth = True
+			if OLD_NORMALS:
+				bpy_mesh.use_auto_smooth = True
 		
 		except RuntimeError as msg:
 			print("MSH importer failed to import normals for %r:" % bpy_mesh.name, msg)
-			bpy_mesh.use_auto_smooth = False
+			if OLD_NORMALS:
+				bpy_mesh.use_auto_smooth = False
 	
 	def create_uvmap(self, bpy_mesh, uvs):
 		bpy_uvmap = bpy_mesh.uv_layers.new().data

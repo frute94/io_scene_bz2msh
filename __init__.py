@@ -1,8 +1,8 @@
 bl_info = {
 	"name": "BZ2 MSH format",
 	"author": "FruteSoftware@gmail.com",
-	"version": (1, 0, 6),
-	"blender": (4, 0, 0),
+	"version": (1, 0, 67),
+	"blender": (4, 1, 0),
 	"location": "File > Import-Export",
 	"description": "Battlezone II MSH Importer",
 	"category": "Import-Export"

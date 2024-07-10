@@ -106,6 +106,16 @@ def read_material_file(filepath, default_diffuse=None):
 	
 	return textures
 
+def verts_of_all_vertex_groups(mesh):
+	index_start = 0
+	vert_start = 0
+	for vgroup in mesh.vert_groups:
+		index_end = index_start + vgroup.index_count.value
+		for index in mesh.indices[index_start:index_end]:
+			yield mesh.vertex[vert_start + index]
+		vert_start += vgroup.vert_count.value
+		index_start = index_end
+
 class Load:
 	def __init__(self, operator, context, filepath="", as_collection=False, **opt):
 		self.opt = opt
@@ -334,6 +344,7 @@ class Load:
 		
 		return bpy_mesh
 	
+	# 7-10-2024: Import logic improved by ZerothDivision and tested by GrizzlyOne95
 	def create_local_mesh(self, mesh):
 		if len(mesh.vertex) <= 0:
 			return None
@@ -341,20 +352,28 @@ class Load:
 		vertices = [(vert.pos.x, vert.pos.y, vert.pos.z) for vert in mesh.vertex]
 		
 		faces = []
-		triangle = []
-		for index in mesh.indices:
-			triangle += [index]
-			if len(triangle) >= 3:
-				faces += [triangle]
-				triangle = []
-		
-		if triangle:
-			print("Mesh %r has vertex index count indivisible by 3" % mesh.name)
+		index_start = 0
+		vert_start = 0
+		for vgindex, vgroup in enumerate(mesh.vert_groups):
+			triangle = []
+			index_end = index_start + vgroup.index_count.value
+			for index in mesh.indices[index_start:index_end]:
+				triangle += [vert_start + index]
+				if len(triangle) >= 3:
+					faces += [triangle]
+					triangle = []
+			
+			if triangle:
+				print("Mesh %r vertex group %r has vertex index count indivisible by 3" % (mesh.name, vgindex))
+			
+			vert_start += vgroup.vert_count.value
+			index_start = index_end
 		
 		bpy_mesh = bpy.data.meshes.new(mesh.name)
 		bpy_mesh.from_pydata(vertices, [], faces)
 		
 		if self.opt["import_mesh_materials"]:
+			face_start = 0
 			bpy_materials = []
 			for local_vert_group in mesh.vert_groups:
 				lmat, ltex = local_vert_group.material, local_vert_group.texture
@@ -370,21 +389,28 @@ class Load:
 					if PRINT_LOCAL_MATERIAL_REUSE:
 						print("New Material %r" % lmat.name)
 				
+				mat_index = len(bpy_mesh.materials)
 				bpy_mesh.materials.append(bpy_materials[-1])
-			
-			if len(bpy_materials) > 1:
-				print("Warning: Local material imports with more than 1 material per mesh not supported.")
-				print("Try importing as global mesh if results look bad.")
+				
+				face_end = face_start + local_vert_group.index_count.value//3  # Index count should be divisible by 3
+				for index in range(face_start, face_end):
+					bpy_mesh.polygons[index].material_index = mat_index
+				
+				face_start = face_end
+				
+			# These are now supported! Yay!
+			#if len(bpy_materials) > 1:
+			#	print("Warning: Local material imports with more than 1 material per mesh not supported.")
+			#	print("Try importing as global mesh if results look bad.")
 		
 		if self.opt["import_mesh_uvmap"]:
-			uvs = [tuple(mesh.vertex[index].uv) for index in mesh.indices]
-			
-			self.create_uvmap(bpy_mesh, uvs)
+			self.create_uvmap(bpy_mesh, [tuple(vertex.uv) for vertex in verts_of_all_vertex_groups(mesh)])
 		
 		if self.opt["import_mesh_normals"]:
-			self.create_normals(bpy_mesh, [tuple(mesh.vertex[index].norm) for index in mesh.indices])
+			self.create_normals(bpy_mesh, [tuple(vertex.norm) for vertex in verts_of_all_vertex_groups(mesh)])
 		
 		if self.opt["import_mesh_vertcolor"]:
+			# Does this need to be updated to respect vertex groups? Or is it correct as is?
 			colors = []
 			if mesh.vert_colors:
 				for face in faces:
